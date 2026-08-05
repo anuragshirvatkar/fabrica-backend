@@ -1,0 +1,36 @@
+{
+  "name": "fabrica-backend",
+  "version": "1.0.0",
+  "description": "Fabrica - B2B fabric marketplace backend",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [
+    "fabrica",
+    "fabric",
+    "marketplace"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cloudinary": "^2.10.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.10.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "morgan": "^1.10.0",
+    "multer": "^2.2.0",
+    "nodemailer": "^9.0.4",
+    "openai": "^4.104.0",
+    "pdfkit": "^0.19.1"
+  },
+  "devDependencies": {
+    "@types/multer": "^2.2.0",
+    "@types/nodemailer": "^8.0.1"
+  }
+}

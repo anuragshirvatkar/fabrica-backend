@@ -16,14 +16,14 @@ const baseOptions = {
 export const apiLimiter = rateLimit({
   ...baseOptions,
   windowMs: 15 * 60 * 1000,
-  max: 400,
+  max: 20_000,
 });
 
 /** Auth routes — login sync, me, etc. (per IP). */
 export const authLimiter = rateLimit({
   ...baseOptions,
   windowMs: 15 * 60 * 1000,
-  max: 60,
+  max: 3_000,
   message: {
     ...rateLimitedBody,
     message: 'Too many auth attempts. Please wait a few minutes and try again.',
@@ -34,18 +34,18 @@ export const authLimiter = rateLimit({
 export const signInHintLimiter = rateLimit({
   ...baseOptions,
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 1_000,
   message: {
     ...rateLimitedBody,
     message: 'Too many sign-in checks. Please wait a few minutes and try again.',
   },
 });
 
-/** AI endpoints are expensive — keep tighter. */
+/** AI endpoints are expensive — keep tighter than general API. */
 export const aiLimiter = rateLimit({
   ...baseOptions,
   windowMs: 15 * 60 * 1000,
-  max: 40,
+  max: 2_000,
   message: {
     ...rateLimitedBody,
     message: 'Too many AI requests. Please wait a few minutes and try again.',
@@ -59,7 +59,7 @@ export const aiLimiter = rateLimit({
 export const accountLimiter = rateLimit({
   ...baseOptions,
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 15_000,
   keyGenerator: (req) => {
     const uid = req.user?._id?.toString() || req.firebaseUser?.uid;
     if (uid) return `user:${uid}`;

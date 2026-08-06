@@ -1,5 +1,6 @@
 import admin from '../config/firebase.js';
 import User from '../models/User.js';
+import { accountLimiter } from './rateLimit.js';
 
 export const verifyFirebaseToken = async (req, res, next) => {
   try {
@@ -17,7 +18,7 @@ export const verifyFirebaseToken = async (req, res, next) => {
     const decodedToken = await admin.auth().verifyIdToken(idToken);
 
     req.firebaseUser = decodedToken;
-    next();
+    return accountLimiter(req, res, next);
   } catch (error) {
     return res.status(401).json({
       success: false,
@@ -54,7 +55,7 @@ export const requireAuth = async (req, res, next) => {
 
     req.firebaseUser = decodedToken;
     req.user = user;
-    next();
+    return accountLimiter(req, res, next);
   } catch (error) {
     return res.status(401).json({
       success: false,

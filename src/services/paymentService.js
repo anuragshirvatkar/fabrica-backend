@@ -27,7 +27,7 @@ const buildReference = (orderId) => {
 
 /** Idempotent: create a system payment when an order is delivered. */
 export const ensurePaymentForDeliveredOrder = async (order) => {
-  if (!order || order.status !== 'DELIVERED') return null;
+  if (!order || order.status !== 'COMPLETED') return null;
 
   if (order.paymentId) {
     const existingById = await Payment.findById(order.paymentId);
@@ -76,7 +76,7 @@ export const listSellerPayments = async (user) => {
   // Backfill payments for delivered orders that predate this feature.
   const missing = await Order.find({
     sellerId: seller._id,
-    status: 'DELIVERED',
+    status: 'COMPLETED',
     $or: [{ paymentId: null }, { paymentId: { $exists: false } }],
   }).limit(50);
 
@@ -109,7 +109,7 @@ export const getPaymentForOrder = async (user, orderId) => {
   const order = await Order.findOne({ _id: orderId, sellerId: seller._id });
   if (!order) throw createError('Order not found', 404, 'ORDER_NOT_FOUND');
 
-  if (order.status === 'DELIVERED') {
+  if (order.status === 'COMPLETED') {
     return ensurePaymentForDeliveredOrder(order);
   }
 

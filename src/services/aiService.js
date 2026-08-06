@@ -6,7 +6,24 @@ import {
   listMarketplaceProducts,
 } from './marketplaceService.js';
 import { personalizeForBuyer } from './personalizationService.js';
+import {
+  formatBuyerPrefsForAi,
+  getBuyerPreferencesLean,
+} from './buyerService.js';
 import { createError } from '../utils/errors.js';
+
+const loadBuyerPrefsText = async (user) => {
+  if (user?.role !== 'BUYER' || !user?._id) return '';
+  const prefs = await getBuyerPreferencesLean(user._id);
+  return formatBuyerPrefsForAi(prefs);
+};
+
+const enrichQueryWithPrefs = (query, prefsText) => {
+  const base = String(query || '').trim();
+  if (!prefsText) return base;
+  if (!base) return `Recommend fabrics for this buyer profile: ${prefsText}`;
+  return `${base}\nBuyer profile preferences: ${prefsText}`;
+};
 
 const SYSTEM_SOURCING =
   'You are Fabrica AI, a premium B2B textile sourcing expert for Indian and global fabric buyers. Speak warmly and professionally. Never invent products, prices, GSM, colors, or specs. Only use catalog data provided in the message. If data is missing, say so clearly.';
@@ -84,6 +101,8 @@ const productCard = (product) => {
           description: product.seller.description || '',
         }
       : null,
+    forYou: Boolean(product.forYou || product._forYou),
+    forYouReason: String(product.forYouReason || '').trim(),
   };
 };
 
@@ -349,15 +368,17 @@ Write 2-3 short sentences summarizing what you found. Mention only these product
 
 export const aiRecommend = async (query, options = {}) => {
   const text = String(query || '').trim();
-  if (!text) throw createError('Query is required', 400, 'QUERY_REQUIRED');
-
   const user = options.user || null;
-  const parsed = await parseNaturalLanguageQuery(text);
-  const products = (await searchCatalog(text, parsed, user)).slice(0, 6).map(productCard);
+  const prefsText = await loadBuyerPrefsText(user);
+  const enriched = enrichQueryWithPrefs(text, prefsText);
+  if (!enriched) throw createError('Query is required', 400, 'QUERY_REQUIRED');
+
+  const parsed = await parseNaturalLanguageQuery(enriched);
+  const products = (await searchCatalog(enriched, parsed, user)).slice(0, 6).map(productCard);
 
   if (!products.length) {
     return {
-      query: text,
+      query: text || enriched,
       message:
         'No matching published fabrics were found in the catalog for that use case. Try a broader request.',
       products: [],
@@ -369,7 +390,8 @@ export const aiRecommend = async (query, options = {}) => {
     { role: 'system', content: SYSTEM_SOURCING },
     {
       role: 'user',
-      content: `Buyer need: "${text}"
+      content: `Buyer need: "${text || enriched}"
+${prefsText ? `Known buyer preferences (also consider cart/favorites ranking already applied): ${prefsText}` : ''}
 Catalog matches (use only these): ${JSON.stringify(products.map(compactProduct))}
 Return JSON: { "message": string, "recommendations": [ { "productId": string, "reason": string } ] }
 Give a short reason for each product based only on provided fields. Do not invent specs.`,
@@ -623,6 +645,8 @@ export const aiChat = async ({ message, history = [], productId = null, user = n
     };
   }
 
+  const prefsText = await loadBuyerPrefsText(user);
+
   if (intent === 'general') {
     const reply = await chatText([
       { role: 'system', content: SYSTEM_SOURCING },
@@ -630,6 +654,7 @@ export const aiChat = async ({ message, history = [], productId = null, user = n
         role: 'user',
         content: `Conversation: ${JSON.stringify(history.slice(-6))}
 Buyer: ${text}
+${prefsText ? `Buyer preferences on file: ${prefsText}` : ''}
 Respond as Fabrica's textile sourcing expert. Do not invent specific marketplace SKUs. Invite them to describe fabric needs (category, use case, budget).`,
       },
     ]);

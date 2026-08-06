@@ -3,6 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import authRoutes from './routes/authRoutes.js';
 import sellerRoutes from './routes/sellerRoutes.js';
+import buyerRoutes from './routes/buyerRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import marketplaceRoutes from './routes/marketplaceRoutes.js';
 import cartRoutes from './routes/cartRoutes.js';
@@ -14,12 +15,16 @@ import paymentRoutes from './routes/paymentRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
+import { aiLimiter, apiLimiter, authLimiter } from './middleware/rateLimit.js';
 
 const app = express();
 
 // Dynamic auth/API responses must not be etag/304-cached — empty 304 bodies
 // break the frontend client which expects JSON on every poll.
 app.set('etag', false);
+
+// Render / reverse proxies — needed so rate limits key on the real client IP.
+app.set('trust proxy', 1);
 
 const corsOrigins = [
   'http://localhost:3000',
@@ -49,8 +54,10 @@ app.get('/health', (req, res) => {
   res.status(200).json({ success: true, message: 'Fabrica API is running' });
 });
 
-app.use('/api/auth', authRoutes);
+app.use('/api', apiLimiter);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/sellers', sellerRoutes);
+app.use('/api/buyers', buyerRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/marketplace', marketplaceRoutes);
 app.use('/api/cart', cartRoutes);
@@ -60,7 +67,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
-app.use('/api/ai', aiRoutes);
+app.use('/api/ai', aiLimiter, aiRoutes);
 
 app.use(errorHandler);
 

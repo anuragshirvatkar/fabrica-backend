@@ -1,6 +1,8 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import {
   cancelOrder,
+  rejectOrder,
+  advanceOrder,
   dispatchOrder,
   getOrderForUser,
   listBuyerOrders,
@@ -32,6 +34,16 @@ export const getOrder = asyncHandler(async (req, res) => {
 
 export const cancelMyOrder = asyncHandler(async (req, res) => {
   const order = await cancelOrder(req.user, req.params.id);
+  res.status(200).json({ success: true, order });
+});
+
+export const rejectMyOrder = asyncHandler(async (req, res) => {
+  const order = await rejectOrder(req.user, req.params.id);
+  res.status(200).json({ success: true, order });
+});
+
+export const advanceMyOrder = asyncHandler(async (req, res) => {
+  const order = await advanceOrder(req.user, req.params.id);
   res.status(200).json({ success: true, order });
 });
 

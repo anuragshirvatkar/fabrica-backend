@@ -8,9 +8,15 @@ import Notification from '../models/Notification.js';
 import { createError } from '../utils/errors.js';
 import { createNotification } from './notificationService.js';
 import { ensurePaymentForDeliveredOrder } from './paymentService.js';
+import {
+  LEGACY_STATUS_MAP,
+  NEXT_ORDER_STATUS,
+  ORDER_STATUS_LABELS,
+  SELLER_ACTION_LABELS,
+} from '../constants/orderStatuses.js';
 
 const deliveryTimers = new Map();
-const AUTO_DELIVER_MS = 2 * 60_000;
+const AUTO_COMPLETE_MS = 1 * 60_000;
 
 const formatOrder = (order) => ({
   _id: order._id,
@@ -21,91 +27,117 @@ const formatOrder = (order) => ({
   status: order.status,
   totalAmount: order.totalAmount,
   items: order.items,
+  acceptedAt: order.acceptedAt,
+  preparingAt: order.preparingAt,
   dispatchedAt: order.dispatchedAt,
   deliveredAt: order.deliveredAt,
   cancelledAt: order.cancelledAt,
   paymentId: order.paymentId || null,
   createdAt: order.createdAt,
   updatedAt: order.updatedAt,
+  nextActionLabel: SELLER_ACTION_LABELS[order.status] || null,
+  statusLabel: ORDER_STATUS_LABELS[order.status] || order.status,
 });
 
-const msUntilAutoDeliver = (order) => {
+const msUntilAutoComplete = (order) => {
   const dispatchedAt = order.dispatchedAt ? new Date(order.dispatchedAt).getTime() : Date.now();
-  const dueAt = dispatchedAt + AUTO_DELIVER_MS;
-  return dueAt - Date.now();
+  return dispatchedAt + AUTO_COMPLETE_MS - Date.now();
 };
 
-const scheduleAutoDeliver = (orderOrId, dispatchedAt = null) => {
+const scheduleAutoComplete = (orderOrId, dispatchedAt = null) => {
   const orderId = String(orderOrId?._id || orderOrId);
   if (deliveryTimers.has(orderId)) {
     clearTimeout(deliveryTimers.get(orderId));
   }
 
-  let delay = AUTO_DELIVER_MS;
+  let delay = AUTO_COMPLETE_MS;
   if (orderOrId && typeof orderOrId === 'object') {
-    delay = Math.max(0, msUntilAutoDeliver(orderOrId));
+    delay = Math.max(0, msUntilAutoComplete(orderOrId));
   } else if (dispatchedAt) {
-    delay = Math.max(0, new Date(dispatchedAt).getTime() + AUTO_DELIVER_MS - Date.now());
+    delay = Math.max(0, new Date(dispatchedAt).getTime() + AUTO_COMPLETE_MS - Date.now());
   }
 
   const timer = setTimeout(async () => {
     deliveryTimers.delete(orderId);
     try {
-      await markOrderDelivered(orderId);
+      await markOrderCompleted(orderId);
     } catch (error) {
-      console.error('[order] auto-deliver failed', orderId, error.message);
+      console.error('[order] auto-complete failed', orderId, error.message);
     }
   }, delay);
 
   deliveryTimers.set(orderId, timer);
 };
 
-/** If a dispatched order is past the auto-deliver window, complete it now. */
+/** Legacy name kept for server.js boot hook. */
+export const scheduleAutoDeliver = scheduleAutoComplete;
+
+/** If a ready-for-dispatch order is past the auto-complete window, complete it now. */
 const catchUpAutoDelivery = async (order) => {
   if (!order) return null;
-  if (order.status !== 'DISPATCHED') return formatOrder(order);
+  if (order.status !== 'READY_FOR_DISPATCH') return formatOrder(order);
 
-  if (msUntilAutoDeliver(order) > 0) {
-    scheduleAutoDeliver(order);
+  if (msUntilAutoComplete(order) > 0) {
+    scheduleAutoComplete(order);
     return formatOrder(order);
   }
 
-  return (await markOrderDelivered(order._id)) || formatOrder(order);
+  return (await markOrderCompleted(order._id)) || formatOrder(order);
 };
 
-/** Re-schedule / complete auto-deliveries after server restarts. */
+/** One-time remap of legacy PLACED/DISPATCHED/DELIVERED values. */
+export const migrateLegacyOrderStatuses = async () => {
+  let total = 0;
+  for (const [from, to] of Object.entries(LEGACY_STATUS_MAP)) {
+    const result = await Order.collection.updateMany(
+      { status: from },
+      { $set: { status: to } },
+    );
+    total += result.modifiedCount || 0;
+  }
+  if (total) {
+    console.log(`[order] migrated ${total} legacy order status value(s)`);
+  }
+  return total;
+};
+
+/** Re-schedule / complete auto-completions after server restarts. */
 export const recoverPendingAutoDeliveries = async () => {
-  const pending = await Order.find({ status: 'DISPATCHED' }).select('_id status dispatchedAt');
+  await migrateLegacyOrderStatuses();
+
+  const pending = await Order.find({ status: 'READY_FOR_DISPATCH' }).select(
+    '_id status dispatchedAt',
+  );
   let recovered = 0;
   let completed = 0;
 
   for (const order of pending) {
-    if (msUntilAutoDeliver(order) <= 0) {
+    if (msUntilAutoComplete(order) <= 0) {
       try {
-        await markOrderDelivered(order._id);
+        await markOrderCompleted(order._id);
         completed += 1;
       } catch (error) {
-        console.error('[order] recover auto-deliver failed', order._id, error.message);
+        console.error('[order] recover auto-complete failed', order._id, error.message);
       }
     } else {
-      scheduleAutoDeliver(order);
+      scheduleAutoComplete(order);
       recovered += 1;
     }
   }
 
   if (pending.length) {
     console.log(
-      `[order] auto-deliver recovery: ${completed} completed, ${recovered} re-scheduled (${pending.length} dispatched)`,
+      `[order] auto-complete recovery: ${completed} completed, ${recovered} re-scheduled (${pending.length} ready)`,
     );
   }
 };
 
-export const markOrderDelivered = async (orderId) => {
+export const markOrderCompleted = async (orderId) => {
   const order = await Order.findById(orderId);
   if (!order) return null;
-  if (order.status !== 'DISPATCHED') return formatOrder(order);
+  if (order.status !== 'READY_FOR_DISPATCH') return formatOrder(order);
 
-  order.status = 'DELIVERED';
+  order.status = 'COMPLETED';
   order.deliveredAt = new Date();
   await order.save();
 
@@ -114,18 +146,20 @@ export const markOrderDelivered = async (orderId) => {
   const buyer = await User.findById(order.buyerId);
   await createNotification({
     userId: order.buyerId,
-    title: 'Order Delivered',
-    body: `Your order #${String(order._id).slice(-6).toUpperCase()} has been delivered.`,
-    type: 'ORDER_DELIVERED',
+    title: 'Order Completed',
+    body: `Your order #${String(order._id).slice(-6).toUpperCase()} is complete.`,
+    type: 'ORDER_COMPLETED',
     orderId: order._id,
     link: `/orders/${order._id}`,
     email: buyer?.email,
   });
 
-  // Reload so paymentId is included after ensurePaymentForDeliveredOrder.
   const fresh = await Order.findById(orderId);
   return formatOrder(fresh || order);
 };
+
+/** @deprecated use markOrderCompleted */
+export const markOrderDelivered = markOrderCompleted;
 
 export const placeOrder = async (user, { addressId, items: rawItems }) => {
   if (user.role !== 'BUYER') {
@@ -249,7 +283,7 @@ export const placeOrder = async (user, { addressId, items: rawItems }) => {
       country: address.country || 'India',
       postalCode: address.postalCode,
     },
-    status: 'PLACED',
+    status: 'PENDING',
     totalAmount,
     items: orderItems,
   });
@@ -272,8 +306,8 @@ export const placeOrder = async (user, { addressId, items: rawItems }) => {
   await Promise.allSettled([
     createNotification({
       userId: user._id,
-      title: 'Order Placed',
-      body: `Your order #${orderCode} has been placed successfully.`,
+      title: 'Order Pending',
+      body: `Your order #${orderCode} is pending seller acceptance.`,
       type: 'ORDER_PLACED',
       orderId: order._id,
       link: `/orders/${order._id}`,
@@ -384,7 +418,7 @@ export const getOrderForUser = async (user, orderId) => {
     if (ownsOrder) {
       const current = await catchUpAutoDelivery(order);
 
-      if (current.status === 'DELIVERED' && !current.paymentId) {
+      if (current.status === 'COMPLETED' && !current.paymentId) {
         const freshOrder = await Order.findById(orderId);
         if (freshOrder) {
           await ensurePaymentForDeliveredOrder(freshOrder);
@@ -399,26 +433,29 @@ export const getOrderForUser = async (user, orderId) => {
   throw createError('Order not found', 404, 'ORDER_NOT_FOUND');
 };
 
+const restoreOrderStock = async (order) => {
+  for (const item of order.items) {
+    await Product.findByIdAndUpdate(item.productId, {
+      $inc: { availableQuantity: item.quantity },
+    });
+  }
+};
+
 export const cancelOrder = async (user, orderId) => {
   if (user.role !== 'BUYER') throw createError('Only buyers can cancel orders', 403, 'FORBIDDEN');
 
   const order = await Order.findOne({ _id: orderId, buyerId: user._id });
   if (!order) throw createError('Order not found', 404, 'ORDER_NOT_FOUND');
 
-  if (order.status !== 'PLACED') {
-    throw createError('Only orders that are not dispatched can be cancelled', 400, 'CANNOT_CANCEL');
+  if (order.status !== 'PENDING') {
+    throw createError('Only pending orders can be cancelled', 400, 'CANNOT_CANCEL');
   }
 
   order.status = 'CANCELLED';
   order.cancelledAt = new Date();
   await order.save();
 
-  // Restore stock
-  for (const item of order.items) {
-    await Product.findByIdAndUpdate(item.productId, {
-      $inc: { availableQuantity: item.quantity },
-    });
-  }
+  await restoreOrderStock(order);
 
   const seller = await Seller.findById(order.sellerId);
   const sellerUser = seller ? await User.findById(seller.userId) : null;
@@ -450,8 +487,11 @@ export const cancelOrder = async (user, orderId) => {
   return formatOrder(order);
 };
 
-export const dispatchOrder = async (user, orderId) => {
-  if (user.role !== 'SELLER') throw createError('Only sellers can dispatch orders', 403, 'FORBIDDEN');
+/** Seller declines a pending order before accepting. */
+export const rejectOrder = async (user, orderId) => {
+  if (user.role !== 'SELLER') {
+    throw createError('Only sellers can reject orders', 403, 'FORBIDDEN');
+  }
 
   const sellers = await Seller.find({ userId: user._id }).select('_id');
   if (!sellers.length) throw createError('Seller profile not found', 404, 'SELLER_NOT_FOUND');
@@ -462,27 +502,130 @@ export const dispatchOrder = async (user, orderId) => {
   });
   if (!order) throw createError('Order not found', 404, 'ORDER_NOT_FOUND');
 
-  if (order.status !== 'PLACED') {
-    throw createError('Only placed orders can be dispatched', 400, 'INVALID_STATUS');
+  if (order.status !== 'PENDING') {
+    throw createError('Only pending orders can be rejected', 400, 'CANNOT_REJECT');
   }
 
-  order.status = 'DISPATCHED';
-  order.dispatchedAt = new Date();
+  order.status = 'CANCELLED';
+  order.cancelledAt = new Date();
+  await order.save();
+
+  await restoreOrderStock(order);
+
+  const buyer = await User.findById(order.buyerId);
+  const orderCode = String(order._id).slice(-6).toUpperCase();
+
+  if (buyer) {
+    await createNotification({
+      userId: buyer._id,
+      title: 'Order Rejected',
+      body: `Order #${orderCode} was rejected by the seller.`,
+      type: 'ORDER_CANCELLED',
+      orderId: order._id,
+      link: `/orders/${order._id}`,
+      email: buyer.email,
+    });
+  }
+
+  return formatOrder(order);
+};
+
+export const advanceOrder = async (user, orderId) => {
+  if (user.role !== 'SELLER') {
+    throw createError('Only sellers can update order status', 403, 'FORBIDDEN');
+  }
+
+  const sellers = await Seller.find({ userId: user._id }).select('_id');
+  if (!sellers.length) throw createError('Seller profile not found', 404, 'SELLER_NOT_FOUND');
+
+  const order = await Order.findOne({
+    _id: orderId,
+    sellerId: { $in: sellers.map((entry) => entry._id) },
+  });
+  if (!order) throw createError('Order not found', 404, 'ORDER_NOT_FOUND');
+
+  const nextStatus = NEXT_ORDER_STATUS[order.status];
+  if (!nextStatus) {
+    throw createError('This order cannot be advanced further', 400, 'INVALID_STATUS');
+  }
+
+  const now = new Date();
+  order.status = nextStatus;
+  if (nextStatus === 'ACCEPTED') order.acceptedAt = now;
+  if (nextStatus === 'PREPARING') order.preparingAt = now;
+  if (nextStatus === 'READY_FOR_DISPATCH') order.dispatchedAt = now;
+  if (nextStatus === 'COMPLETED') order.deliveredAt = now;
   await order.save();
 
   const buyer = await User.findById(order.buyerId);
   const orderCode = String(order._id).slice(-6).toUpperCase();
 
-  await createNotification({
-    userId: order.buyerId,
-    title: 'Order Dispatched',
-    body: `Your order #${orderCode} has been dispatched.`,
-    type: 'ORDER_DISPATCHED',
-    orderId: order._id,
-    link: `/orders/${order._id}`,
-    email: buyer?.email,
-  });
+  const notify = {
+    ACCEPTED: {
+      title: 'Order Accepted',
+      body: `Seller accepted order #${orderCode}.`,
+      type: 'ORDER_ACCEPTED',
+    },
+    PREPARING: {
+      title: 'Order Preparing',
+      body: `Your order #${orderCode} is being prepared.`,
+      type: 'ORDER_PREPARING',
+    },
+    READY_FOR_DISPATCH: {
+      title: 'Ready for Dispatch',
+      body: `Your order #${orderCode} is ready for dispatch.`,
+      type: 'ORDER_READY_FOR_DISPATCH',
+    },
+    COMPLETED: {
+      title: 'Order Completed',
+      body: `Your order #${orderCode} is complete.`,
+      type: 'ORDER_COMPLETED',
+    },
+  }[nextStatus];
 
-  scheduleAutoDeliver(order);
+  if (notify) {
+    await createNotification({
+      userId: order.buyerId,
+      title: notify.title,
+      body: notify.body,
+      type: notify.type,
+      orderId: order._id,
+      link: `/orders/${order._id}`,
+      email: buyer?.email,
+    });
+  }
+
+  if (nextStatus === 'READY_FOR_DISPATCH') {
+    scheduleAutoComplete(order);
+  }
+
+  if (nextStatus === 'COMPLETED') {
+    await ensurePaymentForDeliveredOrder(order);
+    const fresh = await Order.findById(orderId);
+    return formatOrder(fresh || order);
+  }
+
   return formatOrder(order);
+};
+
+/** @deprecated Prefer advanceOrder — kept for older clients. */
+export const dispatchOrder = async (user, orderId) => {
+  const sellers = await Seller.find({ userId: user._id }).select('_id');
+  if (!sellers.length) throw createError('Seller profile not found', 404, 'SELLER_NOT_FOUND');
+
+  const order = await Order.findOne({
+    _id: orderId,
+    sellerId: { $in: sellers.map((entry) => entry._id) },
+  });
+  if (!order) throw createError('Order not found', 404, 'ORDER_NOT_FOUND');
+
+  // Jump to ready-for-dispatch only from preparing (or accept→… via advance).
+  if (order.status === 'PREPARING') {
+    return advanceOrder(user, orderId);
+  }
+  if (order.status === 'PENDING' || order.status === 'ACCEPTED') {
+    // Advance one step at a time for safety
+    return advanceOrder(user, orderId);
+  }
+  throw createError('Order is not ready to advance via dispatch', 400, 'INVALID_STATUS');
 };

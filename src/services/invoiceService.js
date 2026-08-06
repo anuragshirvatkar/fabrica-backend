@@ -145,7 +145,7 @@ const loadInvoiceContext = async (orderId) => {
 
   const seller = await Seller.findById(order.sellerId);
   let payment = null;
-  if (order.status === 'DELIVERED') {
+  if (order.status === 'COMPLETED') {
     payment = await ensurePaymentForDeliveredOrder(order);
   } else if (order.paymentId) {
     const existing = await Payment.findById(order.paymentId);
@@ -280,7 +280,7 @@ export const getPurchaseInvoiceForOrder = async (user, orderId) => {
     throw createError('Order not found', 404, 'ORDER_NOT_FOUND');
   }
 
-  if (order.status !== 'DELIVERED') {
+  if (order.status !== 'COMPLETED') {
     throw createError('Purchase invoice is available after delivery', 400, 'INVALID_STATUS');
   }
 
@@ -306,7 +306,7 @@ export const getSalesInvoiceForOrder = async (user, orderId) => {
     throw createError('Order not found', 404, 'ORDER_NOT_FOUND');
   }
 
-  if (order.status !== 'DELIVERED') {
+  if (order.status !== 'COMPLETED') {
     throw createError('Sales invoice is available after delivery', 400, 'INVALID_STATUS');
   }
 

@@ -22,8 +22,12 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       enum: [
         'ORDER_PLACED',
+        'ORDER_ACCEPTED',
+        'ORDER_PREPARING',
         'ORDER_DISPATCHED',
+        'ORDER_READY_FOR_DISPATCH',
         'ORDER_DELIVERED',
+        'ORDER_COMPLETED',
         'ORDER_CANCELLED',
         'GENERAL',
       ],

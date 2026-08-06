@@ -1,5 +1,7 @@
+import admin from '../config/firebase.js';
 import User from '../models/User.js';
-import Seller from '../models/Seller.js';
+import Seller, { isSellerProfileComplete } from '../models/Seller.js';
+import Buyer from '../models/Buyer.js';
 
 const mapAuthProvider = (signInProvider) => {
   if (signInProvider === 'google.com') return 'GOOGLE';
@@ -9,8 +11,15 @@ const mapAuthProvider = (signInProvider) => {
 const getSellerSetupCompleted = async (user) => {
   if (user.role === 'BUYER') return true;
 
-  const seller = await Seller.findOne({ userId: user._id }).select('_id').lean();
-  return Boolean(seller);
+  const seller = await Seller.findOne({ userId: user._id }).lean();
+  return isSellerProfileComplete(seller);
+};
+
+const getBuyerSetupCompleted = async (user) => {
+  if (user.role === 'SELLER') return true;
+
+  const buyer = await Buyer.findOne({ userId: user._id }).select('_id').lean();
+  return Boolean(buyer);
 };
 
 const formatUser = (user) => ({
@@ -22,6 +31,12 @@ const formatUser = (user) => ({
   isEmailVerified: user.isEmailVerified,
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
+});
+
+const withSetupFlags = async (user) => ({
+  user: formatUser(user),
+  sellerSetupCompleted: await getSellerSetupCompleted(user),
+  buyerSetupCompleted: await getBuyerSetupCompleted(user),
 });
 
 export const syncUserFromFirebase = async ({ decodedToken, role }) => {
@@ -66,10 +81,7 @@ export const syncUserFromFirebase = async ({ decodedToken, role }) => {
       await user.save();
     }
 
-    return {
-      user: formatUser(user),
-      sellerSetupCompleted: await getSellerSetupCompleted(user),
-    };
+    return withSetupFlags(user);
   }
 
   if (!role || !['BUYER', 'SELLER'].includes(role)) {
@@ -88,13 +100,31 @@ export const syncUserFromFirebase = async ({ decodedToken, role }) => {
     isEmailVerified: true,
   });
 
-  return {
-    user: formatUser(user),
-    sellerSetupCompleted: await getSellerSetupCompleted(user),
-  };
+  return withSetupFlags(user);
 };
 
-export const getAuthProfile = async (user) => ({
-  user: formatUser(user),
-  sellerSetupCompleted: await getSellerSetupCompleted(user),
-});
+export const getAuthProfile = async (user) => withSetupFlags(user);
+
+/** Public hint after a failed email/password login (providers for precise error copy). */
+export const getSignInHint = async (email) => {
+  const normalized = String(email || '').trim().toLowerCase();
+  if (!normalized || !normalized.includes('@')) {
+    const error = new Error('A valid email is required');
+    error.statusCode = 400;
+    error.code = 'INVALID_EMAIL';
+    throw error;
+  }
+
+  try {
+    const firebaseUser = await admin.auth().getUserByEmail(normalized);
+    const providers = (firebaseUser.providerData || [])
+      .map((entry) => entry.providerId)
+      .filter(Boolean);
+    return { exists: true, providers };
+  } catch (error) {
+    if (error?.code === 'auth/user-not-found') {
+      return { exists: false, providers: [] };
+    }
+    throw error;
+  }
+};

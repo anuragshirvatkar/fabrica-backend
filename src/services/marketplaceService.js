@@ -37,6 +37,8 @@ const formatMarketplaceProduct = (product, seller = null) => {
           description: seller.description || '',
         }
       : null,
+    forYou: Boolean(product._forYou || product.forYou),
+    forYouReason: String(product.forYouReason || '').trim(),
     status: product.status,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,

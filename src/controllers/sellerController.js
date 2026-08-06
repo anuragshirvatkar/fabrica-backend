@@ -21,22 +21,7 @@ const ensureSellerRole = (req, res) => {
 export const setupSeller = asyncHandler(async (req, res) => {
   if (!ensureSellerRole(req, res)) return;
 
-  const { companyName, phone, gst, description } = req.body;
-
-  if (!companyName?.trim() || !phone?.trim() || !gst?.trim()) {
-    return res.status(400).json({
-      success: false,
-      message: 'companyName, phone and gst are required',
-      code: 'VALIDATION_ERROR',
-    });
-  }
-
-  const seller = await createSellerProfile(req.user._id, {
-    companyName: companyName.trim(),
-    phone: phone.trim(),
-    gst: gst.trim(),
-    description: description?.trim() || '',
-  });
+  const seller = await createSellerProfile(req.user._id, req.body || {});
 
   res.status(201).json({
     success: true,
@@ -79,22 +64,7 @@ export const updateMySellerProfile = asyncHandler(async (req, res) => {
     });
   }
 
-  const { companyName, phone, gst, description } = req.body;
-
-  if (!companyName?.trim() || !phone?.trim() || !gst?.trim()) {
-    return res.status(400).json({
-      success: false,
-      message: 'companyName, phone and gst are required',
-      code: 'VALIDATION_ERROR',
-    });
-  }
-
-  const seller = await updateSellerProfile(req.user._id, {
-    companyName: companyName.trim(),
-    phone: phone.trim(),
-    gst: gst.trim(),
-    description: description?.trim() || '',
-  });
+  const seller = await updateSellerProfile(req.user._id, req.body || {});
 
   res.status(200).json({
     success: true,

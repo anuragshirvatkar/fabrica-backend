@@ -56,7 +56,7 @@ const formatReview = (doc, currentUserId = null) => {
 const assertDeliveredPurchase = async (buyerId, productId) => {
   const order = await Order.findOne({
     buyerId,
-    status: 'DELIVERED',
+    status: 'COMPLETED',
     'items.productId': productId,
   }).select('_id');
 

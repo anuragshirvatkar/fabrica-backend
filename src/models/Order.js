@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { ORDER_STATUSES } from '../constants/orderStatuses.js';
 
 const orderItemSchema = new mongoose.Schema(
   {
@@ -39,7 +40,7 @@ const orderItemSchema = new mongoose.Schema(
       min: 0,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const addressSnapshotSchema = new mongoose.Schema(
@@ -54,7 +55,7 @@ const addressSnapshotSchema = new mongoose.Schema(
     country: { type: String, default: 'India' },
     postalCode: String,
   },
-  { _id: false }
+  { _id: false },
 );
 
 const orderSchema = new mongoose.Schema(
@@ -82,8 +83,8 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['PLACED', 'DISPATCHED', 'DELIVERED', 'CANCELLED'],
-      default: 'PLACED',
+      enum: ORDER_STATUSES,
+      default: 'PENDING',
       index: true,
     },
     totalAmount: {
@@ -98,6 +99,14 @@ const orderSchema = new mongoose.Schema(
         validator: (items) => items.length > 0,
         message: 'Order must have at least one item',
       },
+    },
+    acceptedAt: {
+      type: Date,
+      default: null,
+    },
+    preparingAt: {
+      type: Date,
+      default: null,
     },
     dispatchedAt: {
       type: Date,
@@ -118,7 +127,7 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Order = mongoose.model('Order', orderSchema);

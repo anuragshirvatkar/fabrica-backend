@@ -25,18 +25,17 @@ export const ORDER_STATUS_LABELS = {
   CANCELLED: 'Cancelled',
 };
 
+/** Seller-driven advances only (Completed is auto after Ready for Dispatch). */
 export const NEXT_ORDER_STATUS = {
   PENDING: 'ACCEPTED',
   ACCEPTED: 'PREPARING',
   PREPARING: 'READY_FOR_DISPATCH',
-  READY_FOR_DISPATCH: 'COMPLETED',
 };
 
 export const SELLER_ACTION_LABELS = {
   PENDING: 'Accept order',
   ACCEPTED: 'Mark Order Prepared',
   PREPARING: 'Mark ready for dispatch',
-  READY_FOR_DISPATCH: 'Mark completed',
 };
 
 /** Remap legacy statuses stored before the brief-aligned pipeline. */

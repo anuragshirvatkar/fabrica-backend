@@ -37,6 +37,12 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    /** Soft delete — account closed; orders/products kept. */
+    deletedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
   },
   { timestamps: true }
 );

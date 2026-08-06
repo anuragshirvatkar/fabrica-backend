@@ -53,6 +53,14 @@ export const requireAuth = async (req, res, next) => {
       });
     }
 
+    if (user.deletedAt) {
+      return res.status(403).json({
+        success: false,
+        message: 'This account has been deleted.',
+        code: 'ACCOUNT_DELETED',
+      });
+    }
+
     req.firebaseUser = decodedToken;
     req.user = user;
     return accountLimiter(req, res, next);
@@ -73,7 +81,7 @@ export const optionalAuth = async (req, res, next) => {
 
     const idToken = authHeader.split('Bearer ')[1];
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const user = await User.findOne({ firebaseUid: decodedToken.uid });
+    const user = await User.findOne({ firebaseUid: decodedToken.uid, deletedAt: null });
     if (user) {
       req.firebaseUser = decodedToken;
       req.user = user;

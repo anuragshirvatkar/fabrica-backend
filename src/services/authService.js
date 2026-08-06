@@ -60,20 +60,43 @@ export const syncUserFromFirebase = async ({ decodedToken, role }) => {
     throw error;
   }
 
-  let user = await User.findOne({
-    $or: [{ firebaseUid }, { email }],
-  });
+  // Prefer active account by Firebase UID, then by email (never revive soft-deleted rows).
+  let user =
+    (await User.findOne({ firebaseUid, deletedAt: null })) ||
+    (await User.findOne({ email, deletedAt: null }));
+
+  const deletedMatch = !user
+    ? await User.findOne({
+        deletedAt: { $ne: null },
+        $or: [{ firebaseUid }, { email }],
+      })
+    : null;
+
+  if (deletedMatch) {
+    const error = new Error(
+      'This account has been deleted. Sign up again with a different email, or contact support.',
+    );
+    error.statusCode = 403;
+    error.code = 'ACCOUNT_DELETED';
+    throw error;
+  }
 
   if (user) {
     let shouldSave = false;
 
-    if (!user.firebaseUid) {
+    // Firebase user was recreated for the same email — re-link UID.
+    if (user.firebaseUid !== firebaseUid) {
       user.firebaseUid = firebaseUid;
       shouldSave = true;
     }
 
     if (!user.isEmailVerified) {
       user.isEmailVerified = true;
+      shouldSave = true;
+    }
+
+    if (user.authProvider !== authProvider) {
+      user.authProvider = authProvider;
       shouldSave = true;
     }
 
@@ -103,7 +126,117 @@ export const syncUserFromFirebase = async ({ decodedToken, role }) => {
   return withSetupFlags(user);
 };
 
-export const getAuthProfile = async (user) => withSetupFlags(user);
+export const getAuthProfile = async (user) => {
+  if (user.deletedAt) {
+    const error = new Error('This account has been deleted.');
+    error.statusCode = 403;
+    error.code = 'ACCOUNT_DELETED';
+    throw error;
+  }
+  return withSetupFlags(user);
+};
+
+const anonymizeDeletedUser = (user) => {
+  const tombstoneEmail = `deleted+${user._id}@deleted.fabrica.local`;
+  const previousEmail = user.email;
+  const previousFirebaseUid = user.firebaseUid;
+
+  user.email = tombstoneEmail;
+  user.firebaseUid = null;
+  user.fcmTokens = [];
+  if (!user.deletedAt) user.deletedAt = new Date();
+
+  return { previousEmail, previousFirebaseUid, tombstoneEmail };
+};
+
+/**
+ * Soft-delete an account by email.
+ * Keeps Mongo orders/products/seller/buyer rows; frees the email for a fresh signup;
+ * disables Firebase Auth for the old identity.
+ */
+export const softDeleteUserByEmail = async (email) => {
+  const normalized = String(email || '').trim().toLowerCase();
+  if (!normalized) {
+    const error = new Error('Email is required');
+    error.statusCode = 400;
+    error.code = 'INVALID_EMAIL';
+    throw error;
+  }
+
+  // Match live email, or already-tombstoned rows still holding the original via lookup miss.
+  let user = await User.findOne({ email: normalized });
+  if (!user && !normalized.startsWith('deleted+')) {
+    // Also allow re-running soft-delete by original email after a partial delete
+    // where deletedAt was set but email was not anonymized yet.
+    user = await User.findOne({ email: normalized, deletedAt: { $ne: null } });
+  }
+
+  if (!user) {
+    const error = new Error(`No Mongo user found for ${normalized}`);
+    error.statusCode = 404;
+    error.code = 'USER_NOT_FOUND';
+    throw error;
+  }
+
+  const alreadyDeleted = Boolean(user.deletedAt);
+  const needsAnonymize = !String(user.email).startsWith('deleted+');
+  const previousFirebaseUid = user.firebaseUid;
+  let previousEmail = user.email;
+  let tombstoneEmail = user.email;
+
+  if (!alreadyDeleted || needsAnonymize) {
+    const anon = anonymizeDeletedUser(user);
+    previousEmail = anon.previousEmail;
+    tombstoneEmail = anon.tombstoneEmail;
+    await user.save();
+  }
+
+  // Remove Firebase Auth identities so the email can sign up again as a new account.
+  // Mongo rows (orders, etc.) stay on the anonymized user id.
+  let firebaseRemoved = false;
+  let firebaseNote = 'no firebase identity to remove';
+  const firebaseTargets = [previousFirebaseUid].filter(Boolean);
+
+  try {
+    const fbUser = await admin.auth().getUserByEmail(normalized);
+    if (fbUser?.uid && !firebaseTargets.includes(fbUser.uid)) {
+      firebaseTargets.push(fbUser.uid);
+    }
+  } catch {
+    // ignore — email may already be unused in Firebase
+  }
+
+  for (const uid of firebaseTargets) {
+    try {
+      await admin.auth().deleteUser(uid);
+      firebaseRemoved = true;
+      firebaseNote = 'Firebase user deleted';
+    } catch (error) {
+      if (error?.code === 'auth/user-not-found') {
+        firebaseNote = 'Firebase user already missing';
+      } else {
+        try {
+          await admin.auth().updateUser(uid, { disabled: true });
+          firebaseRemoved = true;
+          firebaseNote = `Firebase delete failed, disabled instead: ${error.message}`;
+        } catch (inner) {
+          firebaseNote = `Firebase cleanup failed: ${inner.message || error.message}`;
+        }
+      }
+    }
+  }
+
+  return {
+    alreadyDeleted,
+    userId: user._id,
+    email: previousEmail,
+    tombstoneEmail,
+    role: user.role,
+    deletedAt: user.deletedAt,
+    firebaseRemoved,
+    firebaseNote,
+  };
+};
 
 /** Public hint after a failed email/password login (providers for precise error copy). */
 export const getSignInHint = async (email) => {

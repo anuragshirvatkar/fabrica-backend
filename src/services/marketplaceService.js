@@ -318,52 +318,53 @@ export const suggestMarketplace = async (q = '') => {
   return { query: term, products: mapped };
 };
 
-export const getMarketplaceFacets = async () => {
-  const published = { status: 'published' };
+/**
+ * Facet counts use disjunctive (OR-within / AND-across) logic:
+ * each section's counts apply all *other* active filters, so numbers stay
+ * in sync with what selecting that option would yield.
+ */
+export const getMarketplaceFacets = async (params = {}) => {
+  const filterOmitting = (...keys) => {
+    const next = { ...params };
+    for (const key of keys) next[key] = undefined;
+    return buildMarketplaceFilter(next);
+  };
 
-  const [categoryAgg, widthAgg, docs, priceStats] = await Promise.all([
-    Product.aggregate([
-      { $match: published },
-      {
-        $group: {
-          _id: { $toLower: '$category' },
-          name: { $first: '$category' },
-          count: { $sum: 1 },
-        },
-      },
-    ]),
-    Product.aggregate([
-      { $match: { ...published, width: { $ne: null } } },
-      { $group: { _id: '$width', count: { $sum: 1 } } },
-      { $sort: { _id: 1 } },
-    ]),
-    Product.find(published).select('moq gsm').lean(),
-    Product.aggregate([
-      { $match: { ...published, price: { $ne: null } } },
-      {
-        $group: {
-          _id: null,
-          minPrice: { $min: '$price' },
-          maxPrice: { $max: '$price' },
-        },
-      },
-    ]),
+  const [categoryDocs, gsmDocs, moqDocs, priceDocs, widthDocs] = await Promise.all([
+    Product.find(filterOmitting('category', 'categories')).select('category').lean(),
+    Product.find(filterOmitting('gsm')).select('gsm').lean(),
+    Product.find(filterOmitting('moqRanges', 'moqMax')).select('moq').lean(),
+    Product.find(filterOmitting('minPrice', 'maxPrice')).select('price').lean(),
+    Product.find(filterOmitting('width', 'widths', 'minWidth', 'maxWidth'))
+      .select('width')
+      .lean(),
   ]);
 
-  const countByCategory = new Map(
-    categoryAgg.map((row) => [String(row._id || '').toLowerCase(), row.count]),
-  );
+  const countByCategory = new Map();
+  for (const doc of categoryDocs) {
+    const key = String(doc.category || '').trim().toLowerCase();
+    if (!key) continue;
+    countByCategory.set(key, (countByCategory.get(key) || 0) + 1);
+  }
 
   const categories = PRODUCT_CATEGORIES.map((name) => ({
     name,
     count: countByCategory.get(name.toLowerCase()) || 0,
   }));
 
-  const widths = widthAgg.map((row) => ({
-    value: row._id,
-    label: `${row._id}"`,
-    count: row.count,
-  }));
+  const widthCountMap = new Map();
+  for (const doc of widthDocs) {
+    const value = Number(doc.width);
+    if (!Number.isFinite(value)) continue;
+    widthCountMap.set(value, (widthCountMap.get(value) || 0) + 1);
+  }
+  const widths = [...widthCountMap.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([value, count]) => ({
+      value,
+      label: `${value}"`,
+      count,
+    }));
 
   const moqRanges = [
     { id: '1-50', label: '1 – 50 m', min: 1, max: 50 },
@@ -371,7 +372,7 @@ export const getMarketplaceFacets = async () => {
     { id: '101-250', label: '101 – 250 m', min: 101, max: 250 },
     { id: '251+', label: '251+ m', min: 251, max: null },
   ].map((bucket) => {
-    const count = docs.filter((doc) => {
+    const count = moqDocs.filter((doc) => {
       const moq = Number(doc.moq);
       if (!Number.isFinite(moq)) return false;
       if (bucket.max == null) return moq >= bucket.min;
@@ -386,7 +387,7 @@ export const getMarketplaceFacets = async () => {
     { id: '250-350', label: '250 – 350' },
     { id: '350+', label: '350+' },
   ].map((bucket) => {
-    const count = docs.filter((doc) => {
+    const count = gsmDocs.filter((doc) => {
       const gsm = Number(doc.gsm);
       if (!Number.isFinite(gsm)) return false;
       if (bucket.id === '0-150') return gsm <= 150;
@@ -398,7 +399,11 @@ export const getMarketplaceFacets = async () => {
     return { ...bucket, count };
   });
 
+  const prices = priceDocs
+    .map((doc) => Number(doc.price))
+    .filter((value) => Number.isFinite(value));
   const widthValues = widths.map((row) => row.value).filter((value) => Number.isFinite(value));
+
   return {
     categories,
     widths,
@@ -409,8 +414,8 @@ export const getMarketplaceFacets = async () => {
     moqRanges,
     gsmRanges,
     price: {
-      min: priceStats[0]?.minPrice ?? 0,
-      max: priceStats[0]?.maxPrice ?? 0,
+      min: prices.length ? Math.min(...prices) : 0,
+      max: prices.length ? Math.max(...prices) : 0,
     },
   };
 };

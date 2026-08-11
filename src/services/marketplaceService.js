@@ -75,18 +75,104 @@ const SEARCH_SYNONYMS = {
   sari: ['saree', 'sari', 'silk'],
   polycotton: ['polycotton', 'polycot', 'poly cotton', 'poly cot'],
   polycot: ['polycot', 'polycotton', 'poly cotton', 'poly cot'],
-  poly: ['poly', 'polyester', 'polycot', 'polycotton'],
+  poly: ['poly', 'polyester', 'polycot', 'polycotton', 'synthetic'],
   polyester: ['polyester', 'poly', 'synthetic'],
+  synthetic: ['synthetic', 'polyester', 'poly', 'polycot'],
 };
+
+/** Grammar-only stopwords. Never drop category/fabric tokens (cotton, cloth, silk…). */
+const SEARCH_STOPWORDS = new Set([
+  'a',
+  'an',
+  'the',
+  'and',
+  'or',
+  'of',
+  'to',
+  'in',
+  'for',
+  'me',
+  'my',
+  'with',
+  'from',
+  'on',
+  'at',
+  'is',
+  'are',
+  'please',
+  'show',
+  'find',
+  'get',
+  'i',
+  'want',
+  'need',
+]);
 
 const expandSearchTerms = (raw) => {
   const term = String(raw || '').trim();
   if (!term) return [];
   const lower = term.toLowerCase().replace(/\bpoly\s*[- ]?\s*cot(?:ton)?\b/g, 'polycot');
   const extras = SEARCH_SYNONYMS[lower] || [];
-  const parts = lower.split(/\s+/).filter(Boolean);
-  const fromParts = parts.flatMap((part) => SEARCH_SYNONYMS[part] || []);
-  return [...new Set([term, lower, ...extras, ...fromParts])];
+  const parts = lower
+    .split(/[^a-z0-9.]+/i)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const tokens = parts.filter((part) => !SEARCH_STOPWORDS.has(part));
+  const seed = tokens.length ? tokens : parts;
+
+  const expanded = seed.flatMap((part) => {
+    const syns = SEARCH_SYNONYMS[part];
+    return syns?.length ? syns : [part];
+  });
+
+  // Full phrase + every token so "synthetic cloth" / "cotton fabric" hit real fields,
+  // not only an exact multi-word string match.
+  return [...new Set([term, lower, ...extras, ...seed, ...expanded])].filter(Boolean);
+};
+
+/** Match one token against every searchable product field. */
+const clausesForSearchTerm = (term) => {
+  const value = String(term || '').trim();
+  if (!value) return [];
+
+  const pattern = new RegExp(escapeRegex(value), 'i');
+  const clauses = [
+    { name: pattern },
+    { description: pattern },
+    { category: pattern },
+    { unit: pattern },
+    { 'variants.colorHex': pattern },
+  ];
+
+  // Numeric tokens also match GSM / width / MOQ / price / stock.
+  if (/^\d+(\.\d+)?$/.test(value)) {
+    const num = Number(value);
+    if (Number.isFinite(num)) {
+      clauses.push(
+        { gsm: num },
+        { width: num },
+        { moq: num },
+        { price: num },
+        { availableQuantity: num },
+      );
+    }
+  }
+
+  const gsmMatch = value.match(/^(\d+(?:\.\d+)?)\s*gsm$/i);
+  if (gsmMatch) {
+    const num = Number(gsmMatch[1]);
+    if (Number.isFinite(num)) clauses.push({ gsm: num });
+  }
+
+  if (/in|inch|inches|"|”/i.test(value)) {
+    const widthMatch = value.match(/^(\d+(?:\.\d+)?)/);
+    if (widthMatch) {
+      const num = Number(widthMatch[1]);
+      if (Number.isFinite(num)) clauses.push({ width: num });
+    }
+  }
+
+  return clauses;
 };
 
 const buildMarketplaceFilter = ({
@@ -125,16 +211,8 @@ const buildMarketplaceFilter = ({
 
   if (q?.trim()) {
     const terms = expandSearchTerms(q.trim());
-    and.push({
-      $or: terms.flatMap((term) => {
-        const pattern = new RegExp(escapeRegex(term), 'i');
-        return [
-          { name: pattern },
-          { description: pattern },
-          { category: pattern },
-        ];
-      }),
-    });
+    const searchOr = terms.flatMap((entry) => clausesForSearchTerm(entry));
+    if (searchOr.length) and.push({ $or: searchOr });
   }
 
   const minP = parseNumber(minPrice);
@@ -293,16 +371,10 @@ export const suggestMarketplace = async (q = '') => {
   }
 
   const terms = expandSearchTerms(term);
+  const searchOr = terms.flatMap((entry) => clausesForSearchTerm(entry));
   const products = await Product.find({
     status: 'published',
-    $or: terms.flatMap((entry) => {
-      const pattern = new RegExp(escapeRegex(entry), 'i');
-      return [
-        { name: pattern },
-        { description: pattern },
-        { category: pattern },
-      ];
-    }),
+    ...(searchOr.length ? { $or: searchOr } : {}),
   })
     .sort({ updatedAt: -1 })
     .limit(6)

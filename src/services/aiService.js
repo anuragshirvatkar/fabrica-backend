@@ -407,6 +407,7 @@ Map garment/use synonyms carefully:
 - suit / suits / suite / blazer / formal trousers → do NOT use Denim; leave category null (or Cotton/Synthetic/Linen if clearly named). Suits need suiting, twill, poplin, polycot, linen, or silk — never denim.
 - summer / hot weather / breathable summer → prefer Cotton/Linen/Synthetic; do NOT set category Denim
 - If the buyer says "not denim" / "no denim" / "except denim", never set category Denim
+- "synthetic cloth/fabric", "cotton cloth", "silk fabric" → set the fabric category; keywords are optional extras only
 Put the buyer's original words in useCase and keywords — never replace jeans with denim in those fields.
 Current request always overrides any implied buyer preferences.
 Only extract what is clearly stated or strongly implied. Do not invent prices or GSM.`,
@@ -483,13 +484,33 @@ const filterByColorAndKeywords = (products, parsed) => {
   }
 
   if (parsed.keywords?.length) {
-    const keys = parsed.keywords.map((k) => k.toLowerCase());
-    const matched = result.filter((product) => {
-      const blob = `${product.name} ${product.description} ${product.category}`.toLowerCase();
-      return keys.some((key) => blob.includes(key));
-    });
-    // Soft filter: keep prior matches if keyword text is not present on listings.
-    if (matched.length) result = matched;
+    const keys = parsed.keywords.map((k) => k.toLowerCase().trim()).filter(Boolean);
+    if (keys.length) {
+      // Rank by keyword hits across product fields — never drop category matches
+      // just because a generic word like "cloth" is missing from the description.
+      const ranked = result.map((product) => {
+        const blob = [
+          product.name,
+          product.description,
+          product.category,
+          product.unit,
+          product.gsm,
+          product.width,
+          product.moq,
+          product.price,
+          product.availableQuantity,
+          ...(product.colors || []),
+          ...(product.variants || []).map((variant) => variant.colorHex),
+        ]
+          .filter((value) => value != null && value !== '')
+          .join(' ')
+          .toLowerCase();
+        const score = keys.reduce((sum, key) => (blob.includes(key) ? sum + 1 : sum), 0);
+        return { product, score };
+      });
+      ranked.sort((a, b) => b.score - a.score);
+      result = ranked.map((row) => row.product);
+    }
   }
 
   if (parsed.useCase) {

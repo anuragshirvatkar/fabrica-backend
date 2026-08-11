@@ -517,6 +517,7 @@ Rules:
 - For optional description, accept skip.
 - Keep assistantMessage short, warm, and on-brand (no markdown).
 - assistantMessage must ONLY acknowledge this answer (one short sentence). Do NOT ask the next question and do NOT invent fields that are not the current field.
+- When accepted=true for a text field, always put the cleaned answer string in "value" (never null/empty). Do not thank the user while setting accepted=false.
 Return ONLY JSON:
 {
   "accepted": boolean,
@@ -614,12 +615,30 @@ const applyAiResult = (field, ai, fallback) => {
     }
   } else {
     const value = typeof ai.value === 'string' ? ai.value.trim() : '';
-    if (!value) return fallback;
+    if (!value) {
+      // Model accepted/thanked but forgot to echo the value — keep local answer.
+      if (fallback?.accepted && fallback.patch) {
+        return {
+          accepted: true,
+          patch: fallback.patch,
+          assistantMessage: ai.assistantMessage || fallback.assistantMessage,
+        };
+      }
+      return fallback;
+    }
     if (field.optional && ['skip', '__skipped__'].includes(normalize(value))) {
       patch[field.key] = '__skipped__';
     } else {
       const local = heuristicAccept(field, value, {});
       if (!local.accepted) {
+        // Prefer the user's original locally-valid answer over a bad AI rewrite.
+        if (fallback?.accepted && fallback.patch) {
+          return {
+            accepted: true,
+            patch: fallback.patch,
+            assistantMessage: ai.assistantMessage || fallback.assistantMessage,
+          };
+        }
         return {
           accepted: false,
           assistantMessage: ai.assistantMessage || local.assistantMessage,
@@ -920,6 +939,15 @@ export const processOnboardingTurn = async ({
         } else if (local.accepted && field.key === 'companyName' && ai.accepted === false) {
           // Keep a locally valid company name; model can be overly strict.
           decision = local;
+        } else if (local.accepted && field.key === 'description') {
+          // Keep a locally valid description even if the model "thanks" but rejects,
+          // omits value, or otherwise fails to return a patch.
+          decision = {
+            accepted: true,
+            patch: local.patch,
+            assistantMessage:
+              String(ai.assistantMessage || '').trim() || local.assistantMessage,
+          };
         } else {
           decision = applyAiResult(field, ai, local);
         }

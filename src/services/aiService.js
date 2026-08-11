@@ -23,12 +23,14 @@ const loadBuyerPrefsText = async (user) => {
 const enrichQueryWithPrefs = (query, prefsText) => {
   const base = String(query || '').trim();
   if (!prefsText) return base;
-  if (!base) return `Recommend fabrics for this buyer profile: ${prefsText}`;
-  return `${base}\nBuyer profile preferences: ${prefsText}`;
+  // Prefs are soft ranking hints only — never append them into the searchable
+  // query text (that made "summer fabrics" lock onto preferred Denim).
+  if (!base) return `Recommend fabrics based on this buyer profile: ${prefsText}`;
+  return base;
 };
 
 const SYSTEM_SOURCING =
-  'You are Fabrica AI, a premium B2B textile sourcing expert for Indian and global fabric buyers. Speak warmly and professionally. Never invent products, prices, GSM, colors, or specs. Only use catalog data provided in the message. If data is missing, say so clearly.';
+  'You are Fabrica AI, a premium B2B textile sourcing expert for Indian and global fabric buyers. Speak warmly and professionally. Never invent products, prices, GSM, colors, or specs. Only use catalog data provided in the message. If data is missing, say so clearly. Buyer profile preferences are soft hints — the current message always wins when it conflicts (e.g. summer fabrics, “not denim”).';
 
 const ensureOpenAI = () => {
   if (!openaiEnabled || !openai) {
@@ -210,6 +212,34 @@ const USE_CASE_PROFILES = [
     excludeKeywords: [],
   },
   {
+    id: 'summer',
+    terms: [
+      'summer',
+      'summers',
+      'hot weather',
+      'warm weather',
+      'beachwear',
+      'tropical',
+      'breathable summer',
+      'lightweight summer',
+    ],
+    preferCategories: ['Cotton', 'Linen', 'Synthetic'],
+    excludeCategories: ['Denim'],
+    preferKeywords: [
+      'linen',
+      'cotton',
+      'breathable',
+      'lightweight',
+      'soft',
+      'cool',
+      'voile',
+      'poplin',
+      'polycot',
+      'summer',
+    ],
+    excludeKeywords: ['oz', 'workwear denim', 'heavy denim'],
+  },
+  {
     id: 'saree',
     terms: ['saree', 'sari', 'bridal', 'festive'],
     preferCategories: ['Silk'],
@@ -233,6 +263,8 @@ const matchUseCaseProfile = (text) => {
   const use = String(text || '').toLowerCase();
   if (!use.trim()) return null;
 
+  const excluded = extractExcludedCategories(use);
+
   // Prefer longer terms first so "t-shirt" wins over bare "shirt".
   const ranked = [...USE_CASE_PROFILES].sort((a, b) => {
     const maxA = Math.max(...a.terms.map((term) => term.length));
@@ -241,13 +273,56 @@ const matchUseCaseProfile = (text) => {
   });
 
   return (
-    ranked.find((profile) =>
-      profile.terms.some((term) => {
+    ranked.find((profile) => {
+      // "not denim" must not activate the denim prefer-profile.
+      if (
+        profile.preferCategories.length &&
+        profile.preferCategories.every((category) => excluded.includes(category))
+      ) {
+        return false;
+      }
+      return profile.terms.some((term) => {
         const pattern = new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(term)}(?:$|[^a-z0-9])`, 'i');
-        return pattern.test(use);
-      }),
-    ) || null
+        if (!pattern.test(use)) return false;
+        // Ignore fabric terms that appear only inside a negation phrase.
+        const negated = new RegExp(
+          `(?:not|no|without|except|excluding|skip)\\s+(?:the\\s+)?${escapeRegExp(term)}\\b`,
+          'i',
+        );
+        if (negated.test(use)) return false;
+        return true;
+      });
+    }) || null
   );
+};
+
+/** Categories the buyer explicitly rejected ("not denim", "no silk", …). */
+const extractExcludedCategories = (text) => {
+  const lower = String(text || '').toLowerCase();
+  if (!lower.trim()) return [];
+  const excluded = new Set();
+  const patterns = [
+    /\b(?:not|no|without|except|excluding|skip)\s+(?:the\s+)?(denim|jeans|cotton|linen|silk|synthetic|polyester|polycot(?:ton)?)\b/gi,
+    /\b(?:don'?t|do not)\s+(?:want|need|show|give)\s+(?:me\s+)?(denim|jeans|cotton|linen|silk|synthetic|polyester)\b/gi,
+  ];
+  for (const re of patterns) {
+    let match;
+    while ((match = re.exec(lower))) {
+      const term = match[1];
+      if (term === 'jeans' || term === 'denim') excluded.add('Denim');
+      else if (term === 'cotton') excluded.add('Cotton');
+      else if (term === 'linen') excluded.add('Linen');
+      else if (term === 'silk') excluded.add('Silk');
+      else if (
+        term === 'synthetic' ||
+        term === 'polyester' ||
+        term.startsWith('polycot')
+      ) {
+        excluded.add('Synthetic');
+      }
+    }
+  }
+  return [...excluded];
 };
 
 /** Map common garment / slang terms to marketplace fabric categories. */
@@ -330,7 +405,10 @@ Map garment/use synonyms carefully:
 - shirt / shirts → Cotton (unless another fabric is named)
 - saree / sari → Silk (unless another fabric is named)
 - suit / suits / suite / blazer / formal trousers → do NOT use Denim; leave category null (or Cotton/Synthetic/Linen if clearly named). Suits need suiting, twill, poplin, polycot, linen, or silk — never denim.
+- summer / hot weather / breathable summer → prefer Cotton/Linen/Synthetic; do NOT set category Denim
+- If the buyer says "not denim" / "no denim" / "except denim", never set category Denim
 Put the buyer's original words in useCase and keywords — never replace jeans with denim in those fields.
+Current request always overrides any implied buyer preferences.
 Only extract what is clearly stated or strongly implied. Do not invent prices or GSM.`,
     },
     { role: 'user', content: text },
@@ -338,17 +416,24 @@ Only extract what is clearly stated or strongly implied. Do not invent prices or
 
   const normalized = normalizeParsed(parsed);
   const profile = matchUseCaseProfile(text) || matchUseCaseProfile(normalized.useCase || '');
+  const excludedCategories = extractExcludedCategories(text);
 
-  // Never let the model force Denim for suit/formal use cases.
+  // Never let the model force Denim for suit/formal/summer use cases.
   if (
     profile?.excludeCategories?.includes('Denim') &&
     normalized.category === 'Denim'
   ) {
     normalized.category = null;
   }
+  if (excludedCategories.includes(normalized.category)) {
+    normalized.category = null;
+  }
 
   if (!normalized.category && !profile) {
     normalized.category = inferCategoryFromText(text);
+  }
+  if (excludedCategories.includes(normalized.category)) {
+    normalized.category = null;
   }
   if (!normalized.useCase) {
     normalized.useCase = text;
@@ -360,11 +445,22 @@ Only extract what is clearly stated or strongly implied. Do not invent prices or
       preserveJeansDenimWording(text, k),
     );
   }
+  normalized.excludedCategories = excludedCategories;
   return normalized;
 };
 
 const filterByColorAndKeywords = (products, parsed) => {
   let result = products;
+
+  const excluded = Array.isArray(parsed.excludedCategories)
+    ? parsed.excludedCategories
+    : extractExcludedCategories(parsed.useCase || '');
+  if (excluded.length) {
+    const withoutExcluded = result.filter(
+      (product) => !excluded.includes(String(product.category || '')),
+    );
+    if (withoutExcluded.length) result = withoutExcluded;
+  }
 
   if (parsed.color) {
     const color = parsed.color.toLowerCase();
@@ -453,15 +549,23 @@ const searchCatalog = async (query, parsed, user = null) => {
     matchUseCaseProfile(parsed.useCase || '') ||
     matchUseCaseProfile((parsed.keywords || []).join(' '));
 
+  const excludedCategories = [
+    ...new Set([
+      ...(Array.isArray(parsed.excludedCategories) ? parsed.excludedCategories : []),
+      ...extractExcludedCategories(query),
+      ...(profile?.excludeCategories || []),
+    ]),
+  ];
+
   let category = parsed.category || null;
-  // For multi-category use cases (suits), search the full catalog then rank — don't lock to Denim.
+  // For multi-category use cases (suits/summer), search the full catalog then rank — don't lock to Denim.
   if (!category && !profile) {
     category =
       inferCategoryFromText(query) ||
       inferCategoryFromText((parsed.keywords || []).join(' ')) ||
       inferCategoryFromText(parsed.useCase || '');
   }
-  if (profile?.excludeCategories?.includes(category)) {
+  if (profile?.excludeCategories?.includes(category) || excludedCategories.includes(category)) {
     category = null;
   }
 
@@ -473,7 +577,8 @@ const searchCatalog = async (query, parsed, user = null) => {
   let products = [];
 
   // Catalog fetch without user — personalize once after NL soft-filters.
-  if (category) {
+  // Skip category-locked fetch when a use-case profile should browse broadly.
+  if (category && !profile) {
     products = await listMarketplaceProducts({
       category,
       ...priceParams,
@@ -505,6 +610,7 @@ const searchCatalog = async (query, parsed, user = null) => {
     ...parsed,
     category: category || parsed.category,
     useCase: parsed.useCase || query,
+    excludedCategories,
   };
 
   let matched = filterByColorAndKeywords(products, enriched);
@@ -585,11 +691,13 @@ export const aiRecommend = async (query, options = {}) => {
     {
       role: 'user',
       content: `Buyer need: "${text || enriched}"
-${prefsText ? `Known buyer preferences (also consider cart/favorites ranking already applied): ${prefsText}` : ''}
+${prefsText ? `Known buyer preferences (SOFT HINTS ONLY — ignore when they conflict with the current request): ${prefsText}` : ''}
 Catalog matches (use only these): ${JSON.stringify(products.map(compactProduct))}
 Return JSON: { "message": string, "recommendations": [ { "productId": string, "reason": string } ] }
 Give a short reason for each product based only on provided fields. Do not invent specs.
-If the buyer asked for suits/formals, only recommend fabrics suitable for suiting (twill, poplin, polycot, linen, silk, polyester) — never denim/jeans.`,
+If the buyer asked for summer/lightweight fabrics, prefer breathable cotton/linen/synthetic options — never push denim unless they asked for denim/jeans.
+If the buyer asked for suits/formals, only recommend fabrics suitable for suiting (twill, poplin, polycot, linen, silk, polyester) — never denim/jeans.
+If they said “not denim”, do not mention or recommend denim.`,
     },
   ]);
 
@@ -1021,6 +1129,8 @@ Message: ${message}`,
 const normalizeProductKey = (value) =>
   String(value || '')
     .toLowerCase()
+    .replace(/\bpoly\s*[- ]?\s*cot(?:ton)?\b/g, 'polycot')
+    .replace(/\bpolycotton\b/g, 'polycot')
     .replace(/[^a-z0-9]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();

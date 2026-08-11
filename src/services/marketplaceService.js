@@ -73,16 +73,20 @@ const SEARCH_SYNONYMS = {
   denim: ['denim', 'jeans'],
   saree: ['saree', 'sari', 'silk'],
   sari: ['saree', 'sari', 'silk'],
+  polycotton: ['polycotton', 'polycot', 'poly cotton', 'poly cot'],
+  polycot: ['polycot', 'polycotton', 'poly cotton', 'poly cot'],
+  poly: ['poly', 'polyester', 'polycot', 'polycotton'],
+  polyester: ['polyester', 'poly', 'synthetic'],
 };
 
 const expandSearchTerms = (raw) => {
   const term = String(raw || '').trim();
   if (!term) return [];
-  const lower = term.toLowerCase();
+  const lower = term.toLowerCase().replace(/\bpoly\s*[- ]?\s*cot(?:ton)?\b/g, 'polycot');
   const extras = SEARCH_SYNONYMS[lower] || [];
   const parts = lower.split(/\s+/).filter(Boolean);
   const fromParts = parts.flatMap((part) => SEARCH_SYNONYMS[part] || []);
-  return [...new Set([term, ...extras, ...fromParts])];
+  return [...new Set([term, lower, ...extras, ...fromParts])];
 };
 
 const buildMarketplaceFilter = ({

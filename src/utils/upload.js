@@ -16,3 +16,23 @@ export const uploadImages = multer({
     cb(null, true);
   },
 });
+
+export const uploadAudio = multer({
+  storage,
+  limits: {
+    fileSize: 6 * 1024 * 1024,
+    files: 1,
+  },
+  fileFilter: (req, file, cb) => {
+    const type = file.mimetype || '';
+    if (
+      type.startsWith('audio/') ||
+      type === 'video/webm' ||
+      type === 'application/octet-stream'
+    ) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('Only audio files are allowed'));
+  },
+});

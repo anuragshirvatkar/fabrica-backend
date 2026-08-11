@@ -64,10 +64,12 @@ const parseNumber = (value) => {
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/** Expand garment/slang search terms so "jeans" also matches denim listings. */
+/** Expand garment/slang search terms so "jeans" also matches denim listings.
+ * This only widens Mongo $or matching — it must not rewrite the buyer's displayed query.
+ */
 const SEARCH_SYNONYMS = {
-  jeans: ['denim', 'jean'],
-  jean: ['denim', 'jeans'],
+  jeans: ['jeans', 'denim', 'jean'],
+  jean: ['jean', 'jeans', 'denim'],
   denim: ['denim', 'jeans'],
   saree: ['saree', 'sari', 'silk'],
   sari: ['saree', 'sari', 'silk'],

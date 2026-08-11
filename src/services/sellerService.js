@@ -60,15 +60,35 @@ export const formatSeller = (seller) => ({
   updatedAt: seller.updatedAt,
 });
 
+const normalizeIndianPhone = (value) => {
+  let digits = String(value || '').replace(/\D/g, '');
+  if (digits.startsWith('91') && digits.length === 12) digits = digits.slice(2);
+  if (digits.startsWith('0') && digits.length === 11) digits = digits.slice(1);
+  return digits;
+};
+
+const isValidIndianPhone = (value) => {
+  const digits = normalizeIndianPhone(value);
+  return digits.length === 10 && /^[6-9]\d{9}$/.test(digits);
+};
+
 export const sanitizeSellerPayload = (payload) => {
   const companyName = String(payload.companyName || '').trim();
-  const phone = String(payload.phone || '').trim();
+  const phoneRaw = String(payload.phone || '').trim();
   const gst = String(payload.gst || '').trim();
   const description = String(payload.description || '').trim();
 
-  if (!companyName || !phone || !gst) {
+  if (!companyName || !phoneRaw || !gst) {
     throw createError('companyName, phone and gst are required', 400, 'VALIDATION_ERROR');
   }
+  if (!isValidIndianPhone(phoneRaw)) {
+    throw createError(
+      'Phone must be a valid 10-digit Indian mobile number',
+      400,
+      'VALIDATION_ERROR',
+    );
+  }
+  const phone = normalizeIndianPhone(phoneRaw);
 
   const line1 = String(payload.address?.line1 || payload.line1 || '').trim();
   const city = String(payload.address?.city || payload.city || '').trim();
@@ -180,6 +200,7 @@ const emptySeries = (start, end, bucket) => {
         label: cursor.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
         sales: 0,
         orders: 0,
+        products: 0,
       });
       cursor.setDate(cursor.getDate() + 1);
     }
@@ -195,10 +216,40 @@ const emptySeries = (start, end, bucket) => {
       label: cursor.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }),
       sales: 0,
       orders: 0,
+      products: 0,
     });
     cursor.setMonth(cursor.getMonth() + 1);
   }
   return points;
+};
+
+/** New listings per bin from first listing → end (avoids a flat “always 18” line). */
+const buildProductTrend = (productDates, pointCount, end) => {
+  if (!pointCount) return [];
+  if (!productDates.length) return Array(pointCount).fill(0);
+
+  const times = productDates.map((date) => date.getTime()).sort((a, b) => a - b);
+  const startMs = times[0];
+  const endMs = Math.max(end.getTime(), times[times.length - 1]);
+  const span = Math.max(endMs - startMs, 1);
+  const bins = Array(pointCount).fill(0);
+
+  for (const time of times) {
+    let idx = Math.floor(((time - startMs) / span) * pointCount);
+    if (idx >= pointCount) idx = pointCount - 1;
+    if (idx < 0) idx = 0;
+    bins[idx] += 1;
+  }
+
+  return bins;
+};
+
+const previousPeriodBounds = (start, end) => {
+  if (!start || !end) return { prevStart: null, prevEnd: null };
+  const duration = end.getTime() - start.getTime();
+  const prevEnd = new Date(start.getTime() - 1);
+  const prevStart = new Date(prevEnd.getTime() - duration);
+  return { prevStart, prevEnd };
 };
 
 const aggregateOrders = async (sellerId, start, end) => {
@@ -286,6 +337,8 @@ export const getSellerDashboard = async (userId, rangeInput = 'week') => {
 
   const LOW_STOCK_THRESHOLD = 100;
 
+  const { prevStart, prevEnd } = previousPeriodBounds(start, end);
+
   const [
     totals,
     seriesRaw,
@@ -295,6 +348,11 @@ export const getSellerDashboard = async (userId, rangeInput = 'week') => {
     pendingOrderCount,
     pendingOrders,
     inventoryProducts,
+    productCreatedRaw,
+    productsBeforeStart,
+    productsCreatedInRange,
+    productsCreatedPrev,
+    allProductDates,
   ] = await Promise.all([
     aggregateOrders(sellerId, start, end),
     Order.aggregate([
@@ -330,6 +388,36 @@ export const getSellerDashboard = async (userId, rangeInput = 'week') => {
       .sort({ availableQuantity: 1 })
       .limit(80)
       .lean(),
+    Product.aggregate([
+      {
+        $match: {
+          sellerId,
+          ...(start ? { createdAt: { $gte: start, $lte: end } } : { createdAt: { $lte: end } }),
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: dateFormat, date: '$createdAt' },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+    start
+      ? Product.countDocuments({ sellerId, createdAt: { $lt: start } })
+      : Promise.resolve(0),
+    start
+      ? Product.countDocuments({ sellerId, createdAt: { $gte: start, $lte: end } })
+      : Product.countDocuments({ sellerId, createdAt: { $lte: end } }),
+    prevStart && prevEnd
+      ? Product.countDocuments({
+          sellerId,
+          createdAt: { $gte: prevStart, $lte: prevEnd },
+        })
+      : Promise.resolve(0),
+    Product.find({ sellerId }).select('createdAt').sort({ createdAt: 1 }).lean(),
   ]);
 
   const allInventoryAlerts = inventoryProducts
@@ -387,16 +475,19 @@ export const getSellerDashboard = async (userId, rangeInput = 'week') => {
       label: row._id,
       sales: 0,
       orders: 0,
+      products: 0,
     }));
   }
 
   const byKey = new Map(seriesRaw.map((row) => [row._id, row]));
+  const productsByKey = new Map(productCreatedRaw.map((row) => [row._id, row.count || 0]));
   series = series.map((point) => {
     const hit = byKey.get(point.key);
     return {
       ...point,
       sales: hit?.sales || 0,
       orders: hit?.orders || 0,
+      products: productsByKey.get(point.key) || 0,
     };
   });
 
@@ -407,6 +498,32 @@ export const getSellerDashboard = async (userId, rangeInput = 'week') => {
       end,
       bucket === 'month' && range !== 'week' ? 'month' : 'day',
     );
+    series = series.map((point) => ({
+      ...point,
+      products: productsByKey.get(point.key) || 0,
+    }));
+  }
+
+  // Cumulative catalog size across the selected window (for period comparisons).
+  let runningProducts = productsBeforeStart;
+  const productCumulative = series.map((point) => {
+    runningProducts += point.products || 0;
+    return runningProducts;
+  });
+
+  const productDates = allProductDates
+    .map((row) => (row.createdAt ? new Date(row.createdAt) : null))
+    .filter(Boolean);
+  const productTrend = buildProductTrend(productDates, series.length || 7, end);
+
+  let productChange = 0;
+  if (productsCreatedPrev === 0) {
+    productChange = productsCreatedInRange > 0 ? 100 : 0;
+  } else {
+    productChange =
+      Math.round(
+        ((productsCreatedInRange - productsCreatedPrev) / productsCreatedPrev) * 1000,
+      ) / 10;
   }
 
   const avgOrderValue =
@@ -423,6 +540,9 @@ export const getSellerDashboard = async (userId, rangeInput = 'week') => {
     totalProductCount: publishedCount + draftCount,
     pendingOrderCount,
     inventoryAlertCount: allInventoryAlerts.length,
+    productChange,
+    productTrend,
+    productCumulative,
     series,
     recentOrders: recentOrders.map(formatOrderRow),
     pendingOrders: pendingOrders.map(formatOrderRow),

@@ -1,0 +1,720 @@
+FABRICA — PRODUCT TEXTUAL DATA EXPORT
+Generated: 2026-08-11T14:44:38.544Z
+Total products: 20
+
+========================================================================
+PRODUCT 1 of 20
+========================================================================
+_id: 6a738152fce9331e555801e9
+status: published
+step: 3
+name: Premium European Linen 180 GSM
+category: Linen
+description: Lightweight premium European linen with a soft washed finish. Ideal for shirts, dresses, kurtas, and summer collections. Specs: 100% linen; plain weave; non-stretch; summer; machine wash; 3-5% shrinkage; washed finish; Oeko-Tex certified; earthy red, muted plum; typical uses include casual wear and home textiles; lead time 2-3 weeks for India B2B.
+price: 245
+gsm: 180
+width: 58
+moq: 75
+availableQuantity: 6500
+unit: meter
+variantColors: #BD513C, #79404C
+variantCount: 2
+imageCount: 4
+createdAt: Thu Aug 06 2026 00:00:42 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:49 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 2 of 20
+========================================================================
+_id: 6a7384f6cd58d7431c1207bd
+status: published
+step: 3
+name: Stone Washed Linen Premium 220 GSM
+category: Linen
+description: Premium stone-washed linen crafted for luxury apparel with exceptional softness, elegant drape, and long-lasting durability. Perfect for contemporary fashion collections and designer garments. Specs: 100% linen; plain weave; no stretch; all seasons; machine wash; 3-5% shrinkage; soft finish; OEKO-TEX certified; suitable for dresses and shirts; lead time 2-3 weeks.
+price: 315
+gsm: 220
+width: 60
+moq: 50
+availableQuantity: 4800
+unit: meter
+variantColors: #232220, #AA6462
+variantCount: 2
+imageCount: 4
+createdAt: Thu Aug 06 2026 00:16:14 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:48 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 3 of 20
+========================================================================
+_id: 6a738709f85e7e47142c0b4d
+status: published
+step: 3
+name: Signature Washed Linen 200 GSM
+category: Linen
+description: A premium washed linen fabric with a naturally soft texture and graceful drape. Designed for luxury apparel and contemporary collections, offering excellent breathability and everyday comfort. Specs: 100% linen; plain weave; non-stretch; suitable for all seasons; machine wash cold; minimal shrinkage; soft finish; OEKO-TEX certified; ideal for dresses and home textiles; lead time 2-3 weeks.
+price: 275
+gsm: 200
+width: 58
+moq: 60
+availableQuantity: 5900
+unit: meter
+variantColors: #EDE8E3, #BBB881
+variantCount: 2
+imageCount: 6
+createdAt: Thu Aug 06 2026 00:25:05 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:46 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 4 of 20
+========================================================================
+_id: 6a738c35f85e7e47142c0d98
+status: published
+step: 3
+name: Vintage Washed Denim 11 OZ
+category: Denim
+description: Premium vintage-washed denim featuring a naturally faded blue appearance with a soft hand feel. Engineered for modern casualwear, offering excellent comfort, flexibility, and a timeless worn-in look. Specs: 98% cotton, 2% elastane; twill weave; moderate stretch; all-season; machine wash; 3-5% shrinkage; stone-washed finish; Oeko-Tex certified; ideal for jeans and jackets; lead time 2-3 weeks.
+price: 295
+gsm: 375
+width: 60
+moq: 75
+availableQuantity: 4700
+unit: meter
+variantColors: #537B86, #446984
+variantCount: 2
+imageCount: 2
+createdAt: Thu Aug 06 2026 00:47:09 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:45 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 5 of 20
+========================================================================
+_id: 6a7390d8f85e7e47142c0fbf
+status: published
+step: 3
+name: Premium Beige Stretch Denim 10.5 OZ
+category: Denim
+description: A premium beige denim with a refined matte finish and subtle stretch, designed for contemporary casualwear. Soft, breathable, and durable, it offers excellent comfort while maintaining the signature structure of denim. Specs: 98% cotton, 2% elastane; twill weave; moderate stretch; all-season; machine wash; 3-5% shrinkage; matte finish; OEKO-TEX certified; ideal for jeans and jackets; lead time 2-3 weeks.
+price: 285
+gsm: 355
+width: 58
+moq: 75
+availableQuantity: 4900
+unit: meter
+variantColors: #A2875F
+variantCount: 1
+imageCount: 2
+createdAt: Thu Aug 06 2026 01:06:56 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:43 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 6 of 20
+========================================================================
+_id: 6a7396e795a19b5b20556a3f
+status: published
+step: 3
+name: Premium Mulberry Silk 22 Momme
+category: Silk
+description: Luxurious 100% Mulberry silk with a smooth, lustrous finish and elegant drape. Crafted for premium ethnic wear, bridal couture, and high-end fashion collections, offering exceptional softness and natural sheen. Specs: 100% silk; plain weave; no stretch; all seasons; dry clean only; minimal shrinkage; lustrous finish; OEKO-TEX certified; suitable for dresses and sarees; lead time 2-3 weeks in India.
+price: 685
+gsm: 95
+width: 44
+moq: 25
+availableQuantity: 2400
+unit: meter
+variantColors: #E9E9E8, #BA9C78
+variantCount: 2
+imageCount: 4
+createdAt: Thu Aug 06 2026 01:32:47 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:41 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 7 of 20
+========================================================================
+_id: 6a739e84e0f2626d83357783
+status: published
+step: 3
+name: Premium Cotton Twill 240 GSM
+category: Cotton
+description: Premium cotton twill fabric with a soft brushed finish, offering excellent durability, breathability, and a refined texture. Ideal for smart casual apparel and utility garments with a structured yet comfortable feel. Specs: 100% cotton; twill weave; non-stretch; all-season; machine wash; minimal shrinkage; brushed finish; OEKO-TEX certified; beige and taupe; typical uses include trousers and jackets; lead time 2-3 weeks.
+price: 235
+gsm: 240
+width: 58
+moq: 75
+availableQuantity: 7800
+unit: meter
+variantColors: #AD9075, #C8BA95
+variantCount: 2
+imageCount: 4
+createdAt: Thu Aug 06 2026 02:05:16 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:39 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 8 of 20
+========================================================================
+_id: 6a739f3fe0f2626d83357810
+status: published
+step: 3
+name: Organic Cotton Poplin 180 GSM
+category: Cotton
+description: Premium organic cotton poplin with a smooth, lightweight finish and exceptional breathability. Crafted for contemporary apparel, offering superior comfort, softness, and long-lasting durability. Specs: 100% organic cotton; plain weave; non-stretch; all-season; machine wash; 3-5% shrinkage; soft finish; GOTS certified; suitable for shirts, dresses; lead time 2-3 weeks in India.
+price: 215
+gsm: 180
+width: 58
+moq: 50
+availableQuantity: 8600
+unit: meter
+variantColors: #CAE0C5
+variantCount: 1
+imageCount: 2
+createdAt: Thu Aug 06 2026 02:08:23 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:37 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 9 of 20
+========================================================================
+_id: 6a739fcbe0f2626d833578b4
+status: published
+step: 3
+name: Luxury Cotton Satin 200 GSM
+category: Cotton
+description: Premium cotton satin with a smooth surface, elegant matte sheen, and exceptionally soft hand feel. Designed for luxury apparel and contemporary fashion, combining breathable comfort with a refined appearance. Specs: 100% cotton; satin weave; no stretch; all seasons; machine wash; 3% shrinkage; soft finish; Oeko-Tex certified; suitable for dresses and blouses; lead time 2-3 weeks.
+price: 255
+gsm: 200
+width: 58
+moq: 40
+availableQuantity: 5700
+unit: meter
+variantColors: #D88A8A
+variantCount: 1
+imageCount: 2
+createdAt: Thu Aug 06 2026 02:10:43 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:35 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 10 of 20
+========================================================================
+_id: 6a73a5ade0f2626d83357bc7
+status: published
+step: 3
+name: ActiveFlex Sports Fabric 165 GSM
+category: Synthetic
+description: Lightweight performance fabric designed for activewear and sports apparel. Engineered with moisture-wicking, quick-dry, and four-way stretch properties to deliver superior comfort, flexibility, and durability during high-intensity activities. Specs: 90% polyester, 10% spandex; plain weave; 4-way stretch; suitable for all seasons; machine wash; minimal shrinkage; breathable finish; OEKO-TEX certified; ideal for gym wear and outdoor activities; lead time 2-3 weeks.
+price: 175
+gsm: 165
+width: 60
+moq: 125
+availableQuantity: 12800
+unit: meter
+variantColors: #95E303, #EB642C
+variantCount: 2
+imageCount: 3
+createdAt: Thu Aug 06 2026 02:35:49 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:33 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 11 of 20
+========================================================================
+_id: 6a73a69be0f2626d83357cba
+status: published
+step: 3
+name: Essential PolyCot Fabric 120 GSM
+category: Synthetic
+description: Versatile polycot fabric offering excellent durability, wrinkle resistance, and color retention. Lightweight and easy to maintain, it's ideal for uniforms, corporate wear, everyday apparel, and home textile applications. Specs: 65% polyester, 35% cotton; plain weave; non-stretch; all-season; machine wash; 3-5% shrinkage; soft finish; Oeko-Tex certified; grey and charcoal; typical uses include workwear and casual clothing; lead time 2-3 weeks.
+price: 115
+gsm: 120
+width: 58
+moq: 251
+availableQuantity: 22000
+unit: meter
+variantColors: #DADADE, #626366
+variantCount: 2
+imageCount: 2
+createdAt: Thu Aug 06 2026 02:39:47 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:31 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 12 of 20
+========================================================================
+_id: 6a73a4d9e0f2626d83357abb
+status: published
+step: 3
+name: Performance Polyester Fabric 140 GSM
+category: Synthetic
+description: High-performance polyester fabric engineered for durability, wrinkle resistance, and quick drying. Its smooth texture and vibrant color retention make it ideal for uniforms, sportswear, bags, and everyday apparel. Specs: 100% polyester; plain weave; no stretch; all seasons; machine wash; 2% shrinkage; water-repellent finish; OEKO-TEX certified; colors: Coffee Brown, Aqua Blue, Red; typical uses include activewear and accessories; lead time: 2-3 weeks.
+price: 135
+gsm: 140
+width: 60
+moq: 200
+availableQuantity: 18500
+unit: meter
+variantColors: #4C3528, #06B6C1, #E04E44
+variantCount: 3
+imageCount: 3
+createdAt: Thu Aug 06 2026 02:32:17 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:30 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 13 of 20
+========================================================================
+_id: 6a73988ee0f2626d8335730c
+status: published
+step: 3
+name: Luxury Crepe Silk 19 Momme
+category: Silk
+description: A lightweight premium crepe silk with a soft matte sheen and graceful drape. Designed for elegant everyday luxury and contemporary fashion collections, offering exceptional comfort with a refined finish. Specs: 100% silk; crepe weave; no stretch; suitable for all seasons; dry clean only; minimal shrinkage; soft finish; OEKO-TEX certified; ideal for dresses and blouses; lead time 2-3 weeks.
+price: 595
+gsm: 82
+width: 44
+moq: 30
+availableQuantity: 3100
+unit: meter
+variantColors: #DB9272, #C5B0A0
+variantCount: 2
+imageCount: 3
+createdAt: Thu Aug 06 2026 01:39:50 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:28 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 14 of 20
+========================================================================
+_id: 6a7397bee0f2626d83357266
+status: published
+step: 3
+name: Royal Heritage Silk 24 Momme
+category: Silk
+description: Premium royal blue Mulberry silk featuring a rich natural sheen, fluid drape, and luxurious texture. Designed for festive, bridal, and couture garments where elegance and sophistication are essential. Specs: 100% silk; satin weave; no stretch; suitable for all seasons; dry clean only; minimal shrinkage; soft finish; OEKO-TEX certified; typical uses include evening wear and luxury garments; lead time 2-3 weeks in India.
+price: 745
+gsm: 105
+width: 44
+moq: 20
+availableQuantity: 1850
+unit: meter
+variantColors: #06207F
+variantCount: 1
+imageCount: 2
+createdAt: Thu Aug 06 2026 01:36:22 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:25 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 15 of 20
+========================================================================
+_id: 6a738b43f85e7e47142c0c70
+status: published
+step: 3
+name: Classic Indigo Denim 12.5 OZ
+category: Denim
+description: Premium indigo denim woven from high-quality cotton yarn, offering exceptional durability with a timeless finish. Designed for everyday fashion and workwear applications while maintaining comfort and structure. Specs: 98% cotton, 2% elastane; twill weave; moderate stretch; suitable for all seasons; machine wash; minimal shrinkage; raw finish; Oeko-Tex certified; classic blue and navy; ideal for jeans and jackets; lead time 2-3 weeks.
+price: 265
+gsm: 425
+width: 58
+moq: 50
+availableQuantity: 6200
+unit: meter
+variantColors: #3B5B85, #0F1F44
+variantCount: 2
+imageCount: 2
+createdAt: Thu Aug 06 2026 00:43:07 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:23 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 16 of 20
+========================================================================
+_id: 6a730b3399a6140b24fe247b
+status: published
+step: 3
+name: Premium Cotton Poplin 220 GSM
+category: Cotton
+description: Soft, breathable 100% cotton fabric ideal for shirts, uniforms, kurtas, and casual wear. Smooth finish with excellent durability and comfort. Specs: 100% cotton; plain weave; non-stretch; all-season; machine wash; 3-5% shrinkage; smooth finish; OEKO-TEX certified; available in White and Black; typical uses include apparel and home textiles; lead time 2-3 weeks for India B2B.
+price: 185
+gsm: 220
+width: (empty)
+moq: 100
+availableQuantity: 12200
+unit: meter
+variantColors: #F8F8FB, #20201E
+variantCount: 2
+imageCount: 6
+createdAt: Wed Aug 05 2026 15:36:43 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:14 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 17 of 20
+========================================================================
+_id: 6a738eadf85e7e47142c0f06
+status: published
+step: 3
+name: Premium Black Denim 13 OZ
+category: Denim
+description: Premium black denim woven from high-quality cotton yarn with a deep, fade-resistant finish. Offers exceptional durability, structure, and comfort, making it ideal for premium fashion and workwear collections. Specs: 98% cotton, 2% elastane; twill weave; moderate stretch; all-season; machine wash; 3-5% shrinkage; soft finish; Oeko-Tex certified; typical uses include jeans and jackets; lead time 2-3 weeks.
+price: 315
+gsm: 440
+width: 60
+moq: 60
+availableQuantity: 5400
+unit: meter
+variantColors: #1D1D1C
+variantCount: 1
+imageCount: 2
+createdAt: Thu Aug 06 2026 00:57:41 GMT+0530 (India Standard Time)
+updatedAt: Tue Aug 11 2026 20:13:12 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+PRODUCT 18 of 20
+========================================================================
+_id: 6a7996e0c38291827e747ebc
+status: published
+step: 3
+name: Testing
+category: Cotton
+description: Testing
+price: 34
+gsm: 43
+width: 34
+moq: 33
+availableQuantity: 34
+unit: yard
+variantColors: #081034
+variantCount: 1
+imageCount: 1
+createdAt: Mon Aug 10 2026 14:46:16 GMT+0530 (India Standard Time)
+updatedAt: Mon Aug 10 2026 14:46:59 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a7996c0c38291827e747e44
+companyName: Testing
+phone: Testing
+gst: Testing
+description: Testing
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Home textiles
+fabricTypes: Denim
+moqRange: 500 – 2,000 m
+verified: false
+address: Testing, Testing, Andaman and Nicobar Islands, Testing, India
+sellerEmail: bhavyabansal4321@gmail.com
+
+========================================================================
+PRODUCT 19 of 20
+========================================================================
+_id: 6a7996cfc38291827e747e75
+status: draft
+step: 2
+name: Testing
+category: Silk
+description: Testing
+price: (empty)
+gsm: (empty)
+width: (empty)
+moq: (empty)
+availableQuantity: (empty)
+unit: meter
+variantColors: (empty)
+variantCount: 1
+imageCount: 0
+createdAt: Mon Aug 10 2026 14:45:59 GMT+0530 (India Standard Time)
+updatedAt: Mon Aug 10 2026 14:46:04 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a7996c0c38291827e747e44
+companyName: Testing
+phone: Testing
+gst: Testing
+description: Testing
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Home textiles
+fabricTypes: Denim
+moqRange: 500 – 2,000 m
+verified: false
+address: Testing, Testing, Andaman and Nicobar Islands, Testing, India
+sellerEmail: bhavyabansal4321@gmail.com
+
+========================================================================
+PRODUCT 20 of 20
+========================================================================
+_id: 6a74c522769e466349b8cbe6
+status: draft
+step: 2
+name: Premium Cotton Poplin 220 GSM
+category: Linen
+description: tfb
+price: (empty)
+gsm: (empty)
+width: (empty)
+moq: (empty)
+availableQuantity: 10000
+unit: meter
+variantColors: (empty)
+variantCount: 1
+imageCount: 0
+createdAt: Thu Aug 06 2026 23:02:18 GMT+0530 (India Standard Time)
+updatedAt: Thu Aug 06 2026 23:02:54 GMT+0530 (India Standard Time)
+
+--- Seller ---
+sellerId: 6a72ea597aaefc603d6f2a86
+companyName: Anurag Fabric Stores
+phone: 7261941065
+gst: 07AAWFR0503R1ZZ
+description: It a textile showroom
+operatingHours: Mon–Sat, 10 AM – 7 PM
+productCategories: Apparel fabrics
+fabricTypes: Linen, Silk, Cotton, Denim
+moqRange: 100 – 500 m
+verified: false
+address: Meri Mhasrul, nashik, Nashik, Maharashtra, 422004, India
+sellerEmail: anuragshirvatkar1@gmail.com
+
+========================================================================
+FIELD COVERAGE SUMMARY
+========================================================================
+name: 20/20 filled
+category: 20/20 filled
+description: 20/20 filled
+price: 18/20 filled
+gsm: 18/20 filled
+width: 17/20 filled
+moq: 18/20 filled
+availableQuantity: 19/20 filled
+unit: 20/20 filled
+variants: 20/20 have at least one
+colors: 18/20 have colorHex
+images: 18/20 have images
+published: 18/20
